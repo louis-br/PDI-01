@@ -17,9 +17,9 @@ INPUT_IMAGE =  'arroz.bmp'
 # TODO: ajuste estes parâmetros!
 NEGATIVO = False
 THRESHOLD = 0.8
-ALTURA_MIN = 1
-LARGURA_MIN = 1
-N_PIXELS_MIN = 1
+ALTURA_MIN = 5
+LARGURA_MIN = 5
+N_PIXELS_MIN = 25
 
 #===============================================================================
 
@@ -36,9 +36,27 @@ Valor de retorno: versão binarizada da img_in.'''
     # Dica/desafio: usando a função np.where, dá para fazer a binarização muito
     # rapidamente, e com apenas uma linha de código!
 
-    return np.where(img > THRESHOLD, 1, 0)
+    return np.where(img > THRESHOLD, -1, 0)
 
 #-------------------------------------------------------------------------------
+
+def inunda(rotulo, img, x0, y0, largura_img, altura_img, retangulo: dict):
+    '''Flood fill recursivo. '''
+    if x0 == -1 or x0 == largura_img - 1 or y0 == -1 or y0 == altura_img - 1 or img[y0][x0] != -1:
+        return 0
+
+    retangulo['L'] = min(retangulo['L'], x0)
+    retangulo['R'] = max(retangulo['R'], x0)
+    retangulo['T'] = min(retangulo['T'], y0)
+    retangulo['B'] = max(retangulo['B'], y0)
+
+    img[y0][x0] = rotulo
+
+    n_pixels = 1
+    for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+        n_pixels += inunda(rotulo, img, x0 + dx, y0 + dy, largura_img, altura_img, retangulo)
+
+    return n_pixels
 
 def rotula (img, largura_min, altura_min, n_pixels_min):
     '''Rotulagem usando flood fill. Marca os objetos da imagem com os valores
@@ -59,6 +77,30 @@ respectivamente: topo, esquerda, baixo e direita.'''
 
     # TODO: escreva esta função.
     # Use a abordagem com flood fill recursivo.
+
+    solucoes = []
+    altura = len(img)
+    largura = len(img[0])
+    rotulo = 0.1
+
+    for y in range(altura):
+        for x in range(largura):
+            if img[y][x] == -1:
+                retangulo = {
+                    'label': rotulo,
+                    'n_pixels': 0,
+                    'L': x,
+                    'R': x,
+                    'T': y,
+                    'B': y
+                }
+                n_pixels = inunda(rotulo, img, x, y, largura, altura, retangulo)
+                retangulo['n_pixels'] = n_pixels
+                if n_pixels > n_pixels_min and retangulo['R'] - retangulo['L'] >= largura_min and retangulo['B'] - retangulo['T'] >= altura_min:
+                    solucoes.append(retangulo)
+                rotulo += 0.1
+    
+    return solucoes
 
 #===============================================================================
 
@@ -83,7 +125,7 @@ def main ():
         img = 1 - img
     img = binariza (img, THRESHOLD)
     #cv2.imshow ('01 - binarizada', img)
-    cv2.imwrite ('01 - binarizada.png', img*255)
+    cv2.imwrite ('01 - binarizada.png', img*-255)
 
     start_time = timeit.default_timer ()
     componentes = rotula (img, LARGURA_MIN, ALTURA_MIN, N_PIXELS_MIN)
@@ -97,7 +139,7 @@ def main ():
 
     #cv2.imshow ('02 - out', img_out)
     cv2.imwrite ('02 - out.png', img_out*255)
-    cv2.waitKey ()
+    #cv2.waitKey ()
     cv2.destroyAllWindows ()
 
 
