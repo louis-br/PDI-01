@@ -16,7 +16,7 @@ INPUT_IMAGE =  'arroz.bmp'
 
 # TODO: ajuste estes parâmetros!
 NEGATIVO = False
-THRESHOLD = 0.4
+THRESHOLD = 0.8
 ALTURA_MIN = 1
 LARGURA_MIN = 1
 N_PIXELS_MIN = 1
@@ -35,6 +35,8 @@ Valor de retorno: versão binarizada da img_in.'''
     # TODO: escreva o código desta função.
     # Dica/desafio: usando a função np.where, dá para fazer a binarização muito
     # rapidamente, e com apenas uma linha de código!
+
+    return np.where(img > THRESHOLD, 1, 0)
 
 #-------------------------------------------------------------------------------
 
